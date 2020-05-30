@@ -1,16 +1,16 @@
-use async_graphql::{guard::Guard, Context as GqlContext, FieldResult};
 use crate::errors::{SrvError, UnauthorizedInfo};
 use crate::graphql::context::Context;
+use async_graphql::{guard::Guard, Context as GqlContext, FieldResult};
 
 #[derive(Debug)]
 pub enum Role {
     Admin,
-    User
+    User,
 }
 
 #[derive(Debug)]
 pub struct RoleGuard {
-    pub role: Role
+    pub role: Role,
 }
 
 #[derive(Debug)]
@@ -20,23 +20,25 @@ pub struct AuthGuard {}
 impl Guard for RoleGuard {
     async fn check(&self, ctx: &GqlContext<'_>) -> FieldResult<()> {
         let context = ctx.data::<Context>();
+        let auth_service = &context.auth_service;
+        let is_authorized = match &self.role {
+            Role::User => auth_service.is_user(&context.user_assignments),
+            Role::Admin => auth_service.is_admin(&context.user_assignments),
+        };
         dbg!(&self);
-        dbg!(&context.user);
-        let role = String::from(match &self.role {
-            Role::Admin => "admin",
-            Role::User => "user"
-        });
-        dbg!(&role);
-        if context.auth_service.is_authorized(&context.user_assignments, role) {
+        dbg!(is_authorized);
+        dbg!(&context.user_assignments);
+        if is_authorized
+        {
             Ok(())
         } else {
             Err(SrvError::Unauthorized(UnauthorizedInfo {
-                data: String::from("You has no permission to access This!"),
-            }).into())
+                data: String::from("You are not Authorized to acess This!"),
+            })
+            .into())
         }
     }
 }
-
 
 #[async_trait::async_trait]
 impl Guard for AuthGuard {
@@ -46,8 +48,9 @@ impl Guard for AuthGuard {
             Ok(())
         } else {
             Err(SrvError::Unauthorized(UnauthorizedInfo {
-                data: String::from("You are not authenticated!"),
-            }).into())
+                data: String::from("You are not Authenticated!"),
+            })
+            .into())
         }
     }
 }

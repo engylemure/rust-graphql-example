@@ -1,10 +1,12 @@
+use crate::models::external_user_provider::ExternalUserProviderModel as ExternalUserProvider;
+use crate::models::{
+    NewUserTokenModel as NewUserToken, UpdatedUserModel as UpdatedUser, UserModel as User,
+};
+use crate::{errors::SrvError, web_utils::jwt::create_token};
 use async_graphql::{Context, FieldResult, ID};
 use chrono::*;
 use diesel::mysql::MysqlConnection;
 use uuid::Uuid;
-use crate::models::{UserModel as User, NewUserTokenModel as NewUserToken, UpdatedUserModel as UpdatedUser};
-use crate::models::external_user_provider::ExternalUserProviderModel as ExternalUserProvider;
-use crate::{web_utils::jwt::create_token, errors::SrvError};
 
 #[async_graphql::Object(desc = "A user")]
 impl User {
@@ -18,13 +20,12 @@ impl User {
         DateTime::<Utc>::from_utc(self.created_at, Utc)
     }
     pub async fn updated_at(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.updated_at, Utc)    
+        DateTime::<Utc>::from_utc(self.updated_at, Utc)
     }
-    async fn providers(&self, _context: &Context<'_> ) -> FieldResult<Vec<ExternalUserProvider>> {
+    async fn providers(&self, _context: &Context<'_>) -> FieldResult<Vec<ExternalUserProvider>> {
         Ok(Vec::new())
     }
 }
-
 
 /// Token Object with the Auth Token Value a Refresh Token and the User associated with
 pub struct Token {
@@ -33,7 +34,7 @@ pub struct Token {
     pub user: User,
 }
 
-#[async_graphql::Object(desc = "The token object with user information",)]
+#[async_graphql::Object(desc = "The token object with user information")]
 impl Token {
     /// Value of this token
     pub async fn value(&self) -> &String {
@@ -71,5 +72,3 @@ impl Token {
         Ok(self)
     }
 }
-
-

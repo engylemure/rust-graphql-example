@@ -1,5 +1,5 @@
-use validator::Validate;
 use async_graphql::InputObject;
+use validator::Validate;
 
 #[InputObject]
 #[derive(Debug, Validate, Deserialize)]

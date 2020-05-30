@@ -1,7 +1,7 @@
 use chrono::NaiveDateTime;
+use diesel::mysql::MysqlConnection;
 use diesel::prelude::*;
 use diesel::result::Error;
-use diesel::mysql::MysqlConnection;
 
 #[derive(Associations, Queryable, Clone, Debug)]
 pub struct AuthItemModel {

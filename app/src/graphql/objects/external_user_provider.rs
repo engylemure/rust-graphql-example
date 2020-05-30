@@ -1,5 +1,5 @@
+use async_graphql::{Enum, ID};
 use chrono::*;
-use async_graphql::{ID, Enum};
 
 use crate::graphql::context::Context;
 use crate::models::{ExternalUserProviderModel as ExternalUserProvider, UserProvider as UProvider};

@@ -3,9 +3,9 @@ use chrono::*;
 
 use crate::models::UserModel as User;
 use cuid::cuid;
+use diesel::mysql::MysqlConnection;
 use diesel::prelude::*;
 use diesel::result::Error;
-use diesel::mysql::MysqlConnection;
 
 #[derive(Identifiable, Associations, Queryable, Clone, Debug)]
 #[belongs_to(User)]

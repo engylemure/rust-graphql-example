@@ -1,8 +1,8 @@
-use async_graphql::{guard::Guard, FieldError, Context};
 use crate::graphql::guards::*;
+use crate::graphql::input::LocalDataInput;
 use crate::graphql::input::*;
 use crate::graphql::objects::user::Token;
-use crate::graphql::input::LocalDataInput;
+use async_graphql::{guard::Guard, Context, FieldError};
 
 pub mod user;
 pub struct Mutation;

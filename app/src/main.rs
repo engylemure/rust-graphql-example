@@ -13,12 +13,12 @@ mod db;
 mod errors;
 mod graphql;
 mod models;
+mod schema;
 mod utils;
 mod web_utils;
-mod schema;
 
 use actix_cors::Cors;
-use actix_web::{guard, middleware, web, App, HttpServer, web::Data};
+use actix_web::{guard, middleware, web, web::Data, App, HttpServer};
 use listenfd::ListenFd;
 
 use crate::db::{mysql, redis};

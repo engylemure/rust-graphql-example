@@ -1,8 +1,8 @@
-use std::error::Error;
-use diesel::result::{DatabaseErrorKind, Error as DBError};
-use std::fmt::Display;
 use async_graphql::FieldError;
+use diesel::result::{DatabaseErrorKind, Error as DBError};
 use serde_json::json;
+use std::error::Error;
+use std::fmt::Display;
 use validator::ValidationErrors;
 #[derive(Debug)]
 pub enum SrvError {
@@ -24,33 +24,15 @@ pub struct UnauthorizedInfo {
     pub data: String,
 }
 
-
 impl From<SrvError> for FieldError {
     fn from(err: SrvError) -> Self {
         use SrvError::*;
         let (title, extensions) = match err {
-            InternalServerError => (
-                "InternalServerError",
-                json!("")
-            ),
-            Unauthorized(error_info) => (
-                "Unauthorized",
-                json!({
-                    "info": error_info
-                })
-            ),
-            NotFound => (
-                "NotFound",
-                json!("")
-            ),
-            Duplicate(error_info) => (
-                "DUPLICATE",
-                json!("")
-            ),
-            ValidationError(error_info) => (
-                "VALIDATION",
-                json!("")
-            )
+            InternalServerError => ("InternalServerError", json!("")),
+            Unauthorized(error_info) => ("Unauthorized", json!({ "info": error_info })),
+            NotFound => ("NotFound", json!("")),
+            Duplicate(error_info) => ("DUPLICATE", json!("")),
+            ValidationError(error_info) => ("VALIDATION", json!("")),
         };
         FieldError(title.to_string(), Some(extensions))
     }

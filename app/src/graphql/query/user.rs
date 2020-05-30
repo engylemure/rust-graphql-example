@@ -1,7 +1,7 @@
-use async_graphql::Context as GqlContext;
-use diesel::prelude::*;
 use crate::graphql::context::Context;
 use crate::models::UserModel as User;
+use async_graphql::Context as GqlContext;
+use diesel::prelude::*;
 
 pub fn me(ctx: &GqlContext) -> Option<User> {
     let ctx = ctx.data::<Context>();

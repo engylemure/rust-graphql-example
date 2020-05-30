@@ -1,8 +1,8 @@
 //! Db executor actor
+use crate::utils::env::ENV;
 use diesel;
 use diesel::mysql::MysqlConnection;
 use diesel::r2d2::{ConnectionManager, Pool, PoolError, PooledConnection};
-use crate::utils::env::ENV;
 pub type DbPool = Pool<ConnectionManager<MysqlConnection>>;
 pub type DbPooledConnection = PooledConnection<ConnectionManager<MysqlConnection>>;
 

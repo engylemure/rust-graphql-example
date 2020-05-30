@@ -1,11 +1,11 @@
+use crate::models::user::SlimUser;
+use crate::utils::env::ENV;
 use actix_web::{dev, http::header, Error, FromRequest, HttpRequest, HttpResponse};
 use chrono::{Duration, Local};
 use futures::future::{ok, Ready};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
-use std::convert::From;
 use serde_json::Value;
-use crate::models::user::SlimUser;
-use crate::utils::env::ENV;
+use std::convert::From;
 
 pub type LoggedUser = SlimUser;
 
@@ -39,7 +39,7 @@ impl From<Claims> for SlimUser {
     fn from(claims: Claims) -> Self {
         SlimUser {
             id: Some(claims.id),
-            token: None
+            token: None,
         }
     }
 }
@@ -69,19 +69,16 @@ pub fn decode_token(token: &str) -> Option<SlimUser> {
 pub fn token_from_value(value: &Value) -> Option<String> {
     match value {
         Value::String(value) => Some(value.clone()),
-        Value::Object(data) => {
-            data.get("authToken")
-                .or(data.get("authKey"))
-                .or(data.get("authorization"))
-                .or(data.get("Authorization"))
-                .map(|value| {
-                    match value {
-                        Value::String(token) => token.clone(),
-                        _ => "".to_string()
-                    }
-                })
-        },
-        _ => None
+        Value::Object(data) => data
+            .get("authToken")
+            .or(data.get("authKey"))
+            .or(data.get("authorization"))
+            .or(data.get("Authorization"))
+            .map(|value| match value {
+                Value::String(token) => token.clone(),
+                _ => "".to_string(),
+            }),
+        _ => None,
     }
 }
 
@@ -102,8 +99,7 @@ impl FromRequest for SlimUser {
         match token {
             None => return ok(SlimUser::default()),
             Some(token) => {
-                let user = decode_token(&token)
-                .map_or(SlimUser::default(), move |mut user| {
+                let user = decode_token(&token).map_or(SlimUser::default(), move |mut user| {
                     user.token = Some(token);
                     user
                 });

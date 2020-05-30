@@ -1,9 +1,12 @@
 use crate::db::mysql::DbPool;
 use crate::errors::{SrvError, UnauthorizedInfo};
-use crate::models::{AuthAssignmentModel as AuthAssignment, AuthItemModel as AuthItem, AuthItemChildModel as AuthItemChild, UserModel as User};
+use crate::models::{
+    AuthAssignmentModel as AuthAssignment, AuthItemChildModel as AuthItemChild,
+    AuthItemModel as AuthItem, UserModel as User,
+};
+use diesel::mysql::MysqlConnection;
 use diesel::prelude::*;
 use diesel::result::Error;
-use diesel::mysql::MysqlConnection;
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};

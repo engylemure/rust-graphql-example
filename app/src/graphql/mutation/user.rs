@@ -1,13 +1,19 @@
-use async_graphql::{Context as GqlContext, FieldError};
-use diesel::prelude::*;
-use chrono::Utc;
-use validator::Validate;
 use crate::graphql::context::Context;
 use crate::graphql::input::{LocalDataInput, LoginInput, UserInput};
 use crate::graphql::utils::authorization::assert_user;
-use crate::utils::argon::{make_hash};
-use crate::models::{UserModel as User, NewUser, NewAuthAssignmentModel as NewAuthAssignment, UserTokenModel as UserToken, UpdatedUserModel as UpdatedUser};
-use crate::{errors::{SrvError, UnauthorizedInfo}, graphql::objects::user::Token, };
+use crate::models::{
+    NewAuthAssignmentModel as NewAuthAssignment, NewUser, UpdatedUserModel as UpdatedUser,
+    UserModel as User, UserTokenModel as UserToken,
+};
+use crate::utils::argon::make_hash;
+use crate::{
+    errors::{SrvError, UnauthorizedInfo},
+    graphql::objects::user::Token,
+};
+use async_graphql::{Context as GqlContext, FieldError};
+use chrono::Utc;
+use diesel::prelude::*;
+use validator::Validate;
 
 pub type AuthResult = Result<Token, SrvError>;
 
@@ -44,7 +50,9 @@ pub fn login(ctx: &GqlContext<'_>, input: LoginInput) -> AuthResult {
 }
 
 pub fn refresh_token(ctx: &GqlContext<'_>, refresh_token: String) -> AuthResult {
-    use crate::schema::user_tokens::dsl::{refresh_expire_at, refresh_token as r_token, user_tokens};
+    use crate::schema::user_tokens::dsl::{
+        refresh_expire_at, refresh_token as r_token, user_tokens,
+    };
     use crate::schema::users::dsl::{id, users};
     let context = ctx.data::<Context>();
     let conn: &MysqlConnection = &context.pool.get().unwrap();
@@ -68,7 +76,7 @@ pub fn refresh_token(ctx: &GqlContext<'_>, refresh_token: String) -> AuthResult 
     })
 }
 
-pub fn logout(ctx: &GqlContext<'_>,) -> Result<bool, SrvError> {
+pub fn logout(ctx: &GqlContext<'_>) -> Result<bool, SrvError> {
     use crate::schema::user_tokens::dsl::{token, user_tokens};
     let context = ctx.data::<Context>();
     assert_user(&context.user)?;

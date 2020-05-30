@@ -1,6 +1,6 @@
-use chrono::NaiveDate;
 use crate::utils::env::ENV;
 use async_graphql::SimpleObject;
+use chrono::NaiveDate;
 
 #[SimpleObject]
 pub struct ApiVersion {
@@ -11,9 +11,7 @@ pub struct ApiVersion {
 
 pub fn api_version() -> ApiVersion {
     let stage = ENV.rust_env.clone();
-    let date = {
-        NaiveDate::parse_from_str(ENV.api_version_date.as_str(), "%Y-%m-%d").unwrap()
-    };
+    let date = { NaiveDate::parse_from_str(ENV.api_version_date.as_str(), "%Y-%m-%d").unwrap() };
     ApiVersion {
         version: "0.1.0",
         stage,

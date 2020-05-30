@@ -3,10 +3,9 @@ use crate::schema::users;
 use crate::utils::argon::{make_hash, make_salt};
 use chrono::{NaiveDateTime, Utc};
 use cuid::cuid;
-use diesel::prelude::*;
 use diesel::mysql::MysqlConnection;
+use diesel::prelude::*;
 use diesel::result::Error;
-
 
 #[derive(Identifiable, Associations, Queryable, Clone, Debug)]
 #[table_name = "users"]
@@ -21,7 +20,10 @@ pub struct UserModel {
 }
 
 impl UserModel {
-    pub fn auth_assignments(&self, conn: &MysqlConnection) -> Result<Vec<AuthAssignmentModel>, Error> {
+    pub fn auth_assignments(
+        &self,
+        conn: &MysqlConnection,
+    ) -> Result<Vec<AuthAssignmentModel>, Error> {
         use crate::schema::auth_assignments::dsl::*;
         auth_assignments
             .filter(user_id.eq(self.id.to_string()))
@@ -70,7 +72,6 @@ impl<'a> Default for NewUser<'a> {
 }
 
 impl<'a> NewUser<'a> {
-
     pub fn new_without_pw(email: &'a String) -> NewUser<'a> {
         NewUser {
             email: Some(email),

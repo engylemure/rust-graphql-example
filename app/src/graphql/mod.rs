@@ -1,11 +1,11 @@
 pub mod context;
+pub mod guards;
+pub mod input;
 pub mod mutation;
 pub mod objects;
 pub mod query;
 pub mod subscription;
 pub mod utils;
-pub mod input;
-pub mod guards;
 
 use async_graphql::Schema as GqlSchema;
 

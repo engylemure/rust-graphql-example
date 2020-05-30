@@ -1,9 +1,9 @@
 use crate::models::UserModel as User;
 use crate::schema::external_user_providers;
 use chrono::{NaiveDateTime, Utc};
+use diesel::mysql::MysqlConnection;
 use diesel::prelude::*;
 use diesel::result::Error;
-use diesel::mysql::MysqlConnection;
 
 #[derive(Identifiable, Associations, Queryable, Clone)]
 #[belongs_to(User)]

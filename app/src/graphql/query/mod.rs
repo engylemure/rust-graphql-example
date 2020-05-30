@@ -1,8 +1,8 @@
 pub mod user;
 
+use crate::graphql::guards::*;
 use async_graphql::guard::Guard;
 use async_graphql::*;
-use crate::graphql::guards::*;
 
 use crate::models::UserModel as User;
 pub struct QueryRoot;
