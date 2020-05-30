@@ -25,9 +25,6 @@ impl Guard for RoleGuard {
             Role::User => auth_service.is_user(&context.user_assignments),
             Role::Admin => auth_service.is_admin(&context.user_assignments),
         };
-        dbg!(&self);
-        dbg!(is_authorized);
-        dbg!(&context.user_assignments);
         if is_authorized
         {
             Ok(())

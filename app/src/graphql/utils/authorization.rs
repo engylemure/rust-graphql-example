@@ -9,12 +9,12 @@ use diesel::prelude::*;
 use diesel::result::Error;
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc};
 
 #[derive(Clone)]
 pub struct AuthorizationService {
-    pub auth_items: Arc<Mutex<HashMap<String, AuthItem>>>,
-    pub auth_relations: Arc<Mutex<HashMap<String, Vec<String>>>>,
+    pub auth_items: Arc<HashMap<String, AuthItem>>,
+    pub auth_relations: Arc<HashMap<String, Vec<String>>>,
     pub pool: Arc<DbPool>,
 }
 
@@ -24,8 +24,8 @@ const ADMIN_ITEM_NAME: &str = "admin";
 impl AuthorizationService {
     pub fn new(pool: Arc<DbPool>) -> AuthorizationService {
         AuthorizationService {
-            auth_items: Arc::new(Mutex::new(HashMap::new())),
-            auth_relations: Arc::new(Mutex::new(HashMap::new())),
+            auth_items: Arc::new(HashMap::new()),
+            auth_relations: Arc::new(HashMap::new()),
             pool,
         }
     }
@@ -45,14 +45,12 @@ impl AuthorizationService {
     pub fn init(&mut self) -> Result<(), Error> {
         let items = self.auth_items_from_db()?;
         let item_children = self.auth_children_from_db()?;
-        {
-            let mut auth_items = self.auth_items.lock().unwrap();
+        let (auth_items, auth_relations) = {
+            let mut auth_items = HashMap::new();
             for item in items {
                 auth_items.insert(item.name.clone(), item.into());
             }
-        }
-        {
-            let mut auth_relations = self.auth_relations.lock().unwrap();
+            let mut auth_relations: HashMap<String, Vec<String>> = HashMap::new();
             for item_child in item_children {
                 match auth_relations.entry(item_child.parent) {
                     Entry::Occupied(o) => {
@@ -63,7 +61,10 @@ impl AuthorizationService {
                     }
                 };
             }
-        }
+            (auth_items, auth_relations)
+        };
+        self.auth_items = Arc::new(auth_items);
+        self.auth_relations = Arc::new(auth_relations);
         Ok(())
     }
 
@@ -95,7 +96,7 @@ impl AuthorizationService {
     }
 
     fn _is_authorized(&self, role: &String, action: &String) -> bool {
-        let auth_items = self.auth_items.lock().unwrap();
+        let auth_items = &self.auth_items;
         let auth_item = auth_items.get(role);
         return if let Some(auth_item) = auth_item {
             if auth_items.contains_key(action) {
@@ -114,7 +115,7 @@ impl AuthorizationService {
         action: &String,
         already_visited_actions: &mut HashMap<String, ()>,
     ) -> bool {
-        let auth_relations = self.auth_relations.lock().unwrap();
+        let auth_relations = &self.auth_relations;
         match already_visited_actions.entry(auth_item.clone()) {
             Entry::Occupied(_) => {
                 return false;
