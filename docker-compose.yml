@@ -1,0 +1,25 @@
+version: '3'
+services:
+  api:
+    build: .
+    network_mode: bridge
+    env_file: ./env
+    links:
+      - db
+    volumes:
+      - ./app/:/usr/src/app
+    ports:
+      - 8080:80
+      - 8443:443
+  db:
+    image: mysql:5.7.22
+    network_mode: bridge
+    command: --max_allowed_packet=512M
+    ports: 
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: graphql
+  redis:
+    image: redis:5.0-alpine
+    network_mode: bridge

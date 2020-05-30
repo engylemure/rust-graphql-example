@@ -1,0 +1,26 @@
+diff --git a/app/src/schema.rs b/app/src/schema.rs
+index d38d80b..fbb4c15 100755
+--- a/app/src/schema.rs
++++ b/app/src/schema.rs
+@@ -22,18 +22,20 @@ table! {
+         parent -> Varchar,
+         child -> Varchar,
+     }
+ }
+ 
+ table! {
++    use diesel::sql_types::*;
++    use crate::models::external_user_provider::UserProviderMapping;
+     external_user_providers (id) {
+         id -> Varchar,
+         user_id -> Varchar,
+         external_id -> Varchar,
+         email -> Nullable<Varchar>,
+-        provider -> Enum,
++        provider -> UserProviderMapping,
+         created_at -> Timestamp,
+         updated_at -> Timestamp,
+         deleted -> Bool,
+     }
+ }
+ 
