@@ -9,7 +9,7 @@ use diesel::prelude::*;
 use diesel::result::Error;
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
-use std::sync::{Arc};
+use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct AuthorizationService {

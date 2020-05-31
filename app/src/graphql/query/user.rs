@@ -1,6 +1,9 @@
-use crate::graphql::context::Context;
+use crate::graphql::{
+    context::Context,
+    objects::user::{UserConnResult, UserConnection},
+};
 use crate::models::UserModel as User;
-use async_graphql::Context as GqlContext;
+use async_graphql::{connection::DataSource, Context as GqlContext, ID};
 use diesel::prelude::*;
 
 pub fn me(ctx: &GqlContext) -> Option<User> {
@@ -8,10 +11,20 @@ pub fn me(ctx: &GqlContext) -> Option<User> {
     ctx.user.clone()
 }
 
-pub fn users(ctx: &GqlContext) -> Vec<User> {
-    use crate::schema::users::dsl::*;
-    let context = ctx.data::<Context>();
-    let conn: &MysqlConnection = &context.pool.get().unwrap();
-    let users_data = users.load::<User>(conn).expect("");
-    users_data
+pub async fn users(
+    ctx: &GqlContext<'_>,
+    after: Option<ID>,
+    before: Option<ID>,
+    first: Option<i32>,
+    last: Option<i32>,
+) -> UserConnResult {
+    UserConnection
+        .query(
+            ctx,
+            after.map(|val| val.to_string()),
+            before.map(|val| val.to_string()),
+            first,
+            last,
+        )
+        .await
 }

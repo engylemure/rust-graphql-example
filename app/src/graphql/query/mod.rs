@@ -1,6 +1,6 @@
 pub mod user;
 
-use crate::graphql::guards::*;
+use crate::graphql::{guards::*, objects::user::UserConnResult};
 use async_graphql::guard::Guard;
 use async_graphql::*;
 
@@ -15,7 +15,14 @@ impl QueryRoot {
     }
 
     #[field(guard(RoleGuard(role = "Role::Admin")))]
-    pub async fn users(&self, ctx: &Context<'_>) -> Vec<User> {
-        user::users(ctx)
+    pub async fn users(
+        &self,
+        ctx: &Context<'_>,
+        after: Option<ID>,
+        before: Option<ID>,
+        first: Option<i32>,
+        last: Option<i32>,
+    ) -> UserConnResult {
+        user::users(ctx, after, before, first, last).await
     }
 }
