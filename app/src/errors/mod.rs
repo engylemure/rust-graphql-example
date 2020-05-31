@@ -4,6 +4,7 @@ use serde_json::json;
 use std::error::Error;
 use std::fmt::Display;
 use validator::ValidationErrors;
+
 #[derive(Debug)]
 pub enum SrvError {
     InternalServerError,
@@ -31,8 +32,14 @@ impl From<SrvError> for FieldError {
             InternalServerError => ("InternalServerError", json!("")),
             Unauthorized(error_info) => ("Unauthorized", json!({ "info": error_info })),
             NotFound => ("NotFound", json!("")),
-            Duplicate(error_info) => ("DUPLICATE", json!("")),
-            ValidationError(error_info) => ("VALIDATION", json!("")),
+            Duplicate(error_info) => ("DUPLICATE", json!({ "info": error_info.origin })),
+            ValidationError(errors) => {
+                let errors = serde_json::to_value(&errors).unwrap_or(serde_json::Value::Null);
+                (
+                    "VALIDATION",
+                    json!({"info": "Verify the Input data", "errors": errors }),
+                )
+            }
         };
         FieldError(title.to_string(), Some(extensions))
     }
@@ -44,7 +51,6 @@ impl From<DBError> for SrvError {
         // But this would be helpful to easily map errors as our app grows
         match error {
             DBError::DatabaseError(kind, _info) => {
-                println!("{:?}", _info);
                 if let DatabaseErrorKind::UniqueViolation = kind {
                     return SrvError::Duplicate(DuplicateErrorInfo {
                         origin: _info.message().to_string(),

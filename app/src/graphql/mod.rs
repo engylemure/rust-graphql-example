@@ -1,6 +1,7 @@
 pub mod context;
 pub mod guards;
 pub mod input;
+pub mod interfaces;
 pub mod mutation;
 pub mod objects;
 pub mod query;

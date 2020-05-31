@@ -2,12 +2,14 @@ use async_graphql::{Enum, ID};
 use chrono::*;
 
 use crate::graphql::context::Context;
-use crate::models::{ExternalUserProviderModel as ExternalUserProvider, UserProvider as UProvider};
+use crate::models::{ExternalUserProviderModel, UserProvider as UProvider};
+
+pub type ExternalUserProvider = ExternalUserProviderModel;
 
 #[async_graphql::Object(desc = "A user provider")]
 impl ExternalUserProvider {
-    pub async fn id(&self) -> &String {
-        &self.id
+    pub async fn id(&self) -> ID {
+        ID::from(&self.id)
     }
     pub async fn email(&self) -> &Option<String> {
         &self.email

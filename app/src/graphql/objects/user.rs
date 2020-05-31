@@ -1,7 +1,7 @@
 use crate::graphql::context::Context as Ctx;
 use crate::models::external_user_provider::ExternalUserProviderModel as ExternalUserProvider;
 use crate::models::{
-    NewUserTokenModel as NewUserToken, UpdatedUserModel as UpdatedUser, UserModel as User,
+    NewUserTokenModel as NewUserToken, UpdatedUserModel as UpdatedUser, UserModel,
 };
 use crate::{errors::SrvError, web_utils::jwt::create_token};
 use async_graphql::connection::{Connection as GqlConn, DataSource, Edge, EmptyFields};
@@ -9,11 +9,12 @@ use async_graphql::{Context, DataSource, FieldError, FieldResult, ID};
 use chrono::*;
 use diesel::prelude::*;
 use uuid::Uuid;
+pub type User = UserModel;
 
 #[async_graphql::Object(desc = "A user")]
 impl User {
-    pub async fn id(&self) -> &String {
-        &self.id
+    pub async fn id(&self) -> ID {
+        ID::from(&self.id)
     }
     pub async fn email(&self) -> &String {
         &self.email
@@ -103,94 +104,67 @@ impl DataSource for UserConnection {
         use crate::schema::users::{all_columns, id, table};
         let context = ctx.data::<Ctx>();
         let conn: &MysqlConnection = &context.pool.get().unwrap();
+        let mut query = table.into_boxed();
         let PaginatedData {
             data,
             total_pages,
             page,
             ..
         }: PaginatedData<User> = match (after, before, first, last) {
-            (Some(after), Some(before), Some(first), None) => table
-                .filter(id.ge(after.as_str()).and(id.le(before.as_str())))
+            (Some(after), Some(before), Some(first), None) => query
+                .filter(id.ge(after.to_string()).and(id.le(before.to_string())))
                 .paginate(1)
-                .per_page(MAX_PAGE_SIZE)
-                .load_and_count_pages(conn)?,
-            // (Some(after), Some(before), None, Some(last)) => {
-            //     table
-            //     .filter(id.ge(after.as_str()).and(id.le(before.as_str())))
-            //     .paginate(1)
-            //     .per_page(MAX_PAGE_SIZE)
-            //     .load_and_count_pages(conn)?
-            //  },
-            // (Some(after), Some(before), None, None) => {
-            //     table
-            //     .filter(id.ge(after.as_str()).and(id.le(before.as_str())))
-            //     .paginate(1)
-            //     .per_page(MAX_PAGE_SIZE)
-            //     .load_and_count_pages(conn)?
-            // },
-            // (None, Some(before), Some(first), None) => {
-            //     table
-            //     .filter(id.ge(after.as_str()).and(id.le(before.as_str())))
-            //     .paginate(1)
-            //     .per_page(MAX_PAGE_SIZE)
-            //     .load_and_count_pages(conn)?
-            // },
-            // (None, Some(before), None, Some(last)) => {
-            //     table
-            //     .filter(id.ge(after.as_str()).and(id.le(before.as_str())))
-            //     .paginate(1)
-            //     .per_page(MAX_PAGE_SIZE)
-            //     .load_and_count_pages(conn)?
-            // },
-            // (None, Some(before), None, None) => {
-            //     table
-            //     .filter(id.ge(after.as_str()).and(id.le(before.as_str())))
-            //     .paginate(1)
-            //     .per_page(MAX_PAGE_SIZE)
-            //     .load_and_count_pages(conn)?
-            // },
-            // (Some(after), None, Some(first), None) => {
-            //     table
-            //     .filter(id.ge(after.as_str()).and(id.le(before.as_str())))
-            //     .paginate(1)
-            //     .per_page(MAX_PAGE_SIZE)
-            //     .load_and_count_pages(conn)?
-            //  },
-            // (Some(after), None, None, Some(last)) => {
-            //     table
-            //     .filter(id.ge(after.as_str()).and(id.le(before.as_str())))
-            //     .paginate(1)
-            //     .per_page(MAX_PAGE_SIZE)
-            //     .load_and_count_pages(conn)?
-            //  },
-            // (Some(after), None, None, None) => {
-            //     table
-            //     .filter(id.ge(after.as_str()).and(id.le(before.as_str())))
-            //     .paginate(1)
-            //     .per_page(MAX_PAGE_SIZE)
-            //     .load_and_count_pages(conn)?
-            //  },
-            (None, None, Some(first), None) => table
+                .per_page(first as i64),
+            (Some(after), Some(before), None, Some(last)) => query
+                .filter(id.ge(after.to_string()).and(id.le(before.to_string())))
+                .order(id.desc())
+                .paginate(1)
+                .per_page(last as i64),
+            (Some(after), Some(before), None, None) => query
+                .filter(id.ge(after.to_string()).and(id.le(before.to_string())))
+                .paginate(1)
+                .per_page(MAX_PAGE_SIZE),
+            (None, Some(before), Some(first), None) => query
+                .filter(id.le(before.to_string()))
+                .paginate(1)
+                .per_page(first as i64),
+            (None, Some(before), None, Some(last)) => query
+                .filter(id.le(before.to_string()))
+                .order(id.desc())
+                .paginate(1)
+                .per_page(last as i64),
+            (None, Some(before), None, None) => query
+                .filter(id.le(before.to_string()))
+                .paginate(1)
+                .per_page(MAX_PAGE_SIZE),
+            (Some(after), None, Some(first), None) => query
+                .filter(id.ge(after.to_string()))
+                .paginate(1)
+                .per_page(first as i64),
+            (Some(after), None, None, Some(last)) => query
+                .filter(id.ge(after.to_string()))
+                .order(id.desc())
+                .paginate(1)
+                .per_page(last as i64),
+            (Some(after), None, None, None) => query
+                .filter(id.ge(after.to_string()))
+                .paginate(1)
+                .per_page(MAX_PAGE_SIZE),
+            (None, None, Some(first), None) => {
+                query.select(all_columns).paginate(1).per_page(first as i64)
+            }
+            (None, None, None, Some(last)) => query
+                .select(all_columns)
+                .order(id.desc())
+                .paginate(1)
+                .per_page(last as i64),
+            (None, None, None, None) => query
                 .select(all_columns)
                 .paginate(1)
-                .per_page(first as i64)
-                .load_and_count_pages(conn)?,
-            // (None, None, None, Some(last)) => {
-            //     table
-            //     .filter(id.ge(after.as_str()).and(id.le(before.as_str())))
-            //     .paginate(1)
-            //     .per_page(MAX_PAGE_SIZE)
-            //     .load_and_count_pages(conn)?
-            //  },
-            // (None, None, None, None) => {
-            //     table
-            //     .filter(id.ge(after.as_str()).and(id.le(before.as_str())))
-            //     .paginate(1)
-            //     .per_page(MAX_PAGE_SIZE)
-            //     .load_and_count_pages(conn)?
-            // },
+                .per_page(MAX_PAGE_SIZE),
             _ => return Err(FieldError(String::from("Connection error"), None)),
-        };
+        }
+        .load_and_count_pages(conn)?;
         let mut connection = GqlConn::new(page > 1, page < total_pages);
         connection.append(data.into_iter().map(|user_model| {
             Edge::with_additional_fields(ID::from(user_model.id.clone()), user_model, EmptyFields)
