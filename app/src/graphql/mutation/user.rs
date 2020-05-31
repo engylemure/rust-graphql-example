@@ -1,5 +1,6 @@
 use crate::graphql::context::Context;
-use crate::graphql::input::{LocalDataInput, LoginInput, UserInput};
+use crate::graphql::input::user::*;
+use crate::graphql::objects::external_user_provider::UserProvider;
 use crate::graphql::utils::authorization::assert_user;
 use crate::models::{
     NewAuthAssignmentModel as NewAuthAssignment, NewUser, UpdatedUserModel as UpdatedUser,
@@ -17,11 +18,17 @@ use validator::Validate;
 
 pub type AuthResult = Result<Token, SrvError>;
 
-pub fn register(ctx: &GqlContext<'_>, input: LocalDataInput) -> AuthResult {
+/// Registers a User using a Local Authentication Process, returns a [`AuthResult`]
+///
+/// # Arguments
+///
+/// * `ctx` - The GraphQL Context
+/// * `input` - The User data Input
+pub fn register(ctx: &GqlContext<'_>, input: UserRegisterInput) -> AuthResult {
     let context = ctx.data::<Context>();
     input.validate()?;
     let conn: &MysqlConnection = &context.pool.get().unwrap();
-    let LocalDataInput {
+    let UserRegisterInput {
         email, password, ..
     } = input;
     let user = NewUser::new(&email, &password).save(conn)?;
@@ -29,7 +36,13 @@ pub fn register(ctx: &GqlContext<'_>, input: LocalDataInput) -> AuthResult {
     Ok(Token::from_user(user)?.save(conn)?)
 }
 
-pub fn login(ctx: &GqlContext<'_>, input: LoginInput) -> AuthResult {
+/// Login a User using a Local Authentication Process, returns a [`AuthResult`]
+///
+/// # Arguments
+///
+/// * `ctx` - The GraphQL Context
+/// * `input` - The User Data Input
+pub fn login(ctx: &GqlContext<'_>, input: UserLoginInput) -> AuthResult {
     use crate::schema::users::dsl::*;
     let context = ctx.data::<Context>();
     input.validate()?;
@@ -49,6 +62,39 @@ pub fn login(ctx: &GqlContext<'_>, input: LoginInput) -> AuthResult {
     }
 }
 
+/// Login a User using a External User Authentication Process, returns a [`AuthResult`]
+///
+/// # Arguments
+/// * `ctx` - The GraphQL Context
+/// * `input` - The User Data Input
+pub fn login_with_external_user(ctx: &GqlContext<'_>, input: UserExternalDataInput) -> AuthResult {
+    use crate::schema::users::dsl::*;
+    let context = ctx.data::<Context>();
+    let UserExternalDataInput { token, provider } = input;
+    match provider {
+        UserProvider::Facebook => login_with_facebook(context, token),
+        UserProvider::Google => login_with_google(context, token),
+        UserProvider::Apple => login_with_apple(context, token),
+    }
+}
+
+pub fn login_with_facebook(context: &Context, token: String) -> AuthResult {
+    Err(SrvError::Unavailable)
+}
+
+pub fn login_with_google(context: &Context, token: String) -> AuthResult {
+    Err(SrvError::Unavailable)
+}
+
+pub fn login_with_apple(context: &Context, token: String) -> AuthResult {
+    Err(SrvError::Unavailable)
+}
+
+/// Refresh the Authentication Token from a User, returns a [`AuthResult`]
+///
+/// # Arguments
+/// * `ctx` - The GraphQL Context
+/// * `refresh_token` - The Refresh Token received from some other authentication method
 pub fn refresh_token(ctx: &GqlContext<'_>, refresh_token: String) -> AuthResult {
     use crate::schema::user_tokens::dsl::{
         refresh_expire_at, refresh_token as r_token, user_tokens,
@@ -76,6 +122,7 @@ pub fn refresh_token(ctx: &GqlContext<'_>, refresh_token: String) -> AuthResult 
     })
 }
 
+/// Logout a User, this invalidates the Authentication Token used in the Context
 pub fn logout(ctx: &GqlContext<'_>) -> Result<bool, SrvError> {
     use crate::schema::user_tokens::dsl::{token, user_tokens};
     let context = ctx.data::<Context>();
@@ -87,7 +134,12 @@ pub fn logout(ctx: &GqlContext<'_>) -> Result<bool, SrvError> {
     })
 }
 
-pub fn update_user(ctx: &GqlContext<'_>, input: UserInput) -> AuthResult {
+/// Updates a User information such as Email or Password
+///
+/// # Arguments
+/// * `ctx` - The GraphQL Context
+/// * `input` - The User Data that will be Updated
+pub fn update_user(ctx: &GqlContext<'_>, input: UserUpdateInput) -> AuthResult {
     use crate::schema::user_tokens::dsl::*;
     let context = ctx.data::<Context>();
     let user = assert_user(&context.user)?;

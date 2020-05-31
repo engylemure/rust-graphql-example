@@ -1,5 +1,4 @@
 use crate::graphql::guards::*;
-use crate::graphql::input::LocalDataInput;
 use crate::graphql::input::*;
 use crate::graphql::objects::user::Token;
 use async_graphql::{guard::Guard, Context, FieldError};
@@ -11,11 +10,19 @@ type AuthResult = Result<Token, FieldError>;
 
 #[async_graphql::Object]
 impl Mutation {
-    pub async fn login(&self, ctx: &Context<'_>, input: LoginInput) -> AuthResult {
+    pub async fn login(&self, ctx: &Context<'_>, input: UserLoginInput) -> AuthResult {
         Ok(user::login(ctx, input)?)
     }
 
-    pub async fn register(&self, ctx: &Context<'_>, user: LocalDataInput) -> AuthResult {
+    pub async fn login_with_external_user(
+        &self,
+        ctx: &Context<'_>,
+        input: UserExternalDataInput,
+    ) -> AuthResult {
+        Ok(user::login_with_external_user(ctx, input)?)
+    }
+
+    pub async fn register(&self, ctx: &Context<'_>, user: UserRegisterInput) -> AuthResult {
         Ok(user::register(ctx, user)?)
     }
 
@@ -29,7 +36,7 @@ impl Mutation {
     }
 
     #[field(guard(AuthGuard()))]
-    pub async fn update_user(&self, ctx: &Context<'_>, input: UserInput) -> AuthResult {
+    pub async fn update_user(&self, ctx: &Context<'_>, input: UserUpdateInput) -> AuthResult {
         Ok(user::update_user(ctx, input)?)
     }
 }

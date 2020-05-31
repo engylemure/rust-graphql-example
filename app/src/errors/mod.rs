@@ -12,6 +12,7 @@ pub enum SrvError {
     Unauthorized(UnauthorizedInfo),
     Duplicate(DuplicateErrorInfo),
     ValidationError(ValidationErrors),
+    Unavailable,
 }
 
 #[derive(Debug)]
@@ -40,6 +41,10 @@ impl From<SrvError> for FieldError {
                     json!({"info": "Verify the Input data", "errors": errors }),
                 )
             }
+            Unavailable => (
+                "UNAVAILABLE",
+                json!({ "info": "This functionality is not available yet!" }),
+            ),
         };
         FieldError(title.to_string(), Some(extensions))
     }
