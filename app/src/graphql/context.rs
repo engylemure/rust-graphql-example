@@ -1,15 +1,17 @@
 use crate::db::mysql::{DbPool, DbPooledConnection};
+use crate::graphql::dataloaders::DataLoaders;
 use crate::graphql::utils::authorization::AuthorizationService;
 use crate::models::{AuthAssignmentModel as AuthAssignment, UserModel as User};
 use crate::web_utils::jwt::LoggedUser;
 use std::sync::Arc;
 
-type SharedDbPool = Arc<DbPool>;
-type SharedRedisClient = Arc<redis::Client>;
+pub type ArcDbPool = Arc<DbPool>;
+pub type ArcRedisClient = Arc<redis::Client>;
 
 pub struct Context {
-    pub pool: SharedDbPool,
-    pub redis_client: SharedRedisClient,
+    pub pool: ArcDbPool,
+    pub redis_client: ArcRedisClient,
+    pub dataloaders: DataLoaders,
     pub user: Option<User>,
     pub user_token: Option<String>,
     pub user_assignments: Option<Vec<AuthAssignment>>,
@@ -17,11 +19,7 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new(
-        user_info: LoggedUser,
-        pool: SharedDbPool,
-        redis_client: SharedRedisClient,
-    ) -> Context {
+    pub fn new(user_info: LoggedUser, pool: ArcDbPool, redis_client: ArcRedisClient) -> Context {
         let mut auth_service = AuthorizationService::new(Arc::clone(&pool));
         auth_service
             .init()
@@ -38,6 +36,7 @@ impl Context {
             (user, user_assignments)
         };
         Context {
+            dataloaders: DataLoaders::new(pool.clone()),
             pool,
             redis_client,
             user,

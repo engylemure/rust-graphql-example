@@ -25,8 +25,10 @@ impl User {
     pub async fn updated_at(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_utc(self.updated_at, Utc)
     }
-    async fn providers(&self, _ctx: &Context<'_>) -> FieldResult<Vec<ExternalUserProvider>> {
-        Ok(Vec::new())
+    async fn providers(&self, ctx: &Context<'_>) -> Vec<ExternalUserProvider> {
+        let context = ctx.data::<Ctx>();
+        let providers_dataloader = &context.dataloaders.e_user_by_user_id;
+        providers_dataloader.load(self.id.clone()).await
     }
 }
 
